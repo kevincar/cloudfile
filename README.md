@@ -6,12 +6,15 @@ Cloud File CLI is a command-line utility for interacting with cloud-stored files
 
 ```sh
 cloudfile <command> <file-path>
+cloudfile copyfile <source-path> <destination-path>
 ```
 
 ### Commands
 - `materialize` - Downloads the file from the cloud
 - `evict` - Removes the local copy while retaining it in the cloud
 - `status` - Prints `evicted` or `materialized`
+- `copyfile` - Copies a file while preserving its cloud state
+  If the destination path is a directory, the source filename is appended automatically.
 
 ## Building and Installing
 

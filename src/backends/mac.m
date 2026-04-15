@@ -35,7 +35,7 @@ int evict(const char *path) {
     }
 }
 
-int status(const char *path) {
+int get_cloudfile_status(const char *path, int *status_code) {
     @autoreleasepool {
         NSString *filePath = [NSString stringWithUTF8String:path];
         NSURL *fileURL = [NSURL fileURLWithPath:filePath];
@@ -61,13 +61,13 @@ int status(const char *path) {
         }
 
         if ([downloadStatus isEqualToString:NSURLUbiquitousItemDownloadingStatusNotDownloaded]) {
-            printf("evicted\n");
+            *status_code = 0;
             return 0;
         }
 
         if ([downloadStatus isEqualToString:NSURLUbiquitousItemDownloadingStatusDownloaded] ||
             [downloadStatus isEqualToString:NSURLUbiquitousItemDownloadingStatusCurrent]) {
-            printf("materialized\n");
+            *status_code = 1;
             return 0;
         }
 

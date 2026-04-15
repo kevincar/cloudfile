@@ -19,7 +19,7 @@ else()
     message(FATAL_ERROR "Unsupported platform: only macOS and Windows backends are implemented")
 endif()
 
-add_executable(cloudfile src/main.cpp ${BACKEND_SOURCES})
+add_executable(cloudfile src/main.cpp src/cloudfile.cpp ${BACKEND_SOURCES})
 
 target_include_directories(cloudfile PRIVATE src)
 

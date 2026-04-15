@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #define NOMINMAX
@@ -158,9 +159,9 @@ int evict(const std::filesystem::path &path) {
     return 0;
 }
 
-int status(const std::filesystem::path &path) {
+std::optional<CloudFileStatus> get_status(const std::filesystem::path &path) {
     if (!ensureRegularFile(path, "get status for")) {
-        return 1;
+        return std::nullopt;
     }
 
     Handle handle = openPlaceholderFile(
@@ -170,25 +171,23 @@ int status(const std::filesystem::path &path) {
     if (!handle.valid()) {
         std::cerr << "Error opening file for status: "
                   << formatWindowsError(GetLastError()) << '\n';
-        return 1;
+        return std::nullopt;
     }
 
     const CF_PLACEHOLDER_STATE state = getPlaceholderState(handle.get());
     if (state == CF_PLACEHOLDER_STATE_INVALID) {
         std::cerr << "Error checking file status: " << formatWindowsError(GetLastError()) << '\n';
-        return 1;
+        return std::nullopt;
     }
 
     if ((state & CF_PLACEHOLDER_STATE_PLACEHOLDER) == 0) {
         std::cerr << "File is not a cloud placeholder: " << path.string() << '\n';
-        return 1;
+        return std::nullopt;
     }
 
     if ((state & CF_PLACEHOLDER_STATE_PARTIALLY_ON_DISK) != 0) {
-        std::cout << "evicted\n";
-        return 0;
+        return CloudFileStatus::Evicted;
     }
 
-    std::cout << "materialized\n";
-    return 0;
+    return CloudFileStatus::Materialized;
 }
