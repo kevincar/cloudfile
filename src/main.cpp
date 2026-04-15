@@ -1,4 +1,4 @@
-#include "cloudfile.hppl"
+#include "cloudfile.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -10,7 +10,8 @@ void printUsage() {
     std::cout << "Usage: cloudfile <command> <file-path>\n"
               << "Commands:\n"
               << "  materialize - Download the file from the cloud\n"
-              << "  evict - Remove local copy while keeping it in the cloud\n";
+              << "  evict - Remove local copy while keeping it in the cloud\n"
+              << "  status - Print whether the file is evicted or materialized\n";
 }
 
 }  // namespace
@@ -30,6 +31,10 @@ int main(int argc, const char *argv[]) {
 
     if (command == "evict") {
         return evict(filePath);
+    }
+
+    if (command == "status") {
+        return ::status(filePath);
     }
 
     printUsage();

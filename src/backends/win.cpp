@@ -89,6 +89,16 @@ bool ensureRegularFile(const std::filesystem::path &path, const char *command) {
     return true;
 }
 
+CF_PLACEHOLDER_STATE getPlaceholderState(HANDLE fileHandle) {
+    FILE_ATTRIBUTE_TAG_INFO attributeTagInfo{};
+    if (!GetFileInformationByHandleEx(
+            fileHandle, FileAttributeTagInfo, &attributeTagInfo, sizeof(attributeTagInfo))) {
+        return CF_PLACEHOLDER_STATE_INVALID;
+    }
+
+    return CfGetPlaceholderStateFromFileInfo(&attributeTagInfo, FileAttributeTagInfo);
+}
+
 }  // namespace
 
 int materialize(const std::filesystem::path &path) {
@@ -145,5 +155,40 @@ int evict(const std::filesystem::path &path) {
     }
 
     std::cout << "Evicted file: " << path.string() << '\n';
+    return 0;
+}
+
+int status(const std::filesystem::path &path) {
+    if (!ensureRegularFile(path, "get status for")) {
+        return 1;
+    }
+
+    Handle handle = openPlaceholderFile(
+        path,
+        FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE);
+    if (!handle.valid()) {
+        std::cerr << "Error opening file for status: "
+                  << formatWindowsError(GetLastError()) << '\n';
+        return 1;
+    }
+
+    const CF_PLACEHOLDER_STATE state = getPlaceholderState(handle.get());
+    if (state == CF_PLACEHOLDER_STATE_INVALID) {
+        std::cerr << "Error checking file status: " << formatWindowsError(GetLastError()) << '\n';
+        return 1;
+    }
+
+    if ((state & CF_PLACEHOLDER_STATE_PLACEHOLDER) == 0) {
+        std::cerr << "File is not a cloud placeholder: " << path.string() << '\n';
+        return 1;
+    }
+
+    if ((state & CF_PLACEHOLDER_STATE_PARTIALLY_ON_DISK) != 0) {
+        std::cout << "evicted\n";
+        return 0;
+    }
+
+    std::cout << "materialized\n";
     return 0;
 }

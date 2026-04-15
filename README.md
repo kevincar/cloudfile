@@ -11,6 +11,7 @@ cloudfile <command> <file-path>
 ### Commands
 - `materialize` - Downloads the file from the cloud
 - `evict` - Removes the local copy while retaining it in the cloud
+- `status` - Prints `evicted` or `materialized`
 
 ## Building and Installing
 

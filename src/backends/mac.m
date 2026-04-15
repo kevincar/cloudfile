@@ -34,3 +34,44 @@ int evict(const char *path) {
         return 0;
     }
 }
+
+int status(const char *path) {
+    @autoreleasepool {
+        NSString *filePath = [NSString stringWithUTF8String:path];
+        NSURL *fileURL = [NSURL fileURLWithPath:filePath];
+
+        NSNumber *isUbiquitousItem = nil;
+        NSError *error = nil;
+        if (![fileURL getResourceValue:&isUbiquitousItem forKey:NSURLIsUbiquitousItemKey error:&error]) {
+            NSLog(@"Error checking file status: %@", error);
+            return 1;
+        }
+
+        if (![isUbiquitousItem boolValue]) {
+            NSLog(@"File is not managed as a cloud item: %@", filePath);
+            return 1;
+        }
+
+        NSString *downloadStatus = nil;
+        if (![fileURL getResourceValue:&downloadStatus
+                                forKey:NSURLUbiquitousItemDownloadingStatusKey
+                                 error:&error]) {
+            NSLog(@"Error checking file status: %@", error);
+            return 1;
+        }
+
+        if ([downloadStatus isEqualToString:NSURLUbiquitousItemDownloadingStatusNotDownloaded]) {
+            printf("evicted\n");
+            return 0;
+        }
+
+        if ([downloadStatus isEqualToString:NSURLUbiquitousItemDownloadingStatusDownloaded] ||
+            [downloadStatus isEqualToString:NSURLUbiquitousItemDownloadingStatusCurrent]) {
+            printf("materialized\n");
+            return 0;
+        }
+
+        NSLog(@"Unknown cloud status for file %@: %@", filePath, downloadStatus);
+        return 1;
+    }
+}
