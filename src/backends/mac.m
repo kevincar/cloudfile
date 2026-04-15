@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <FileProvider/FileProvider.h>
 
+int cloudfile_is_verbose(void);
+
 int materialize(const char *path) {
     @autoreleasepool {
         NSString *filePath = [NSString stringWithUTF8String:path];
@@ -13,7 +15,9 @@ int materialize(const char *path) {
             return 1;
         }
 
-        NSLog(@"Requested materialization of file: %@", filePath);
+        if (cloudfile_is_verbose()) {
+            printf("Materializing %s\n", [[filePath lastPathComponent] UTF8String]);
+        }
         return 0;
     }
 }
@@ -30,7 +34,9 @@ int evict(const char *path) {
             return 1;
         }
 
-        NSLog(@"Evicted file: %@", filePath);
+        if (cloudfile_is_verbose()) {
+            printf("Evicting %s\n", [[filePath lastPathComponent] UTF8String]);
+        }
         return 0;
     }
 }

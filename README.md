@@ -5,8 +5,9 @@ Cloud File CLI is a command-line utility for interacting with cloud-stored files
 ## Usage
 
 ```sh
-cloudfile <command> <file-path>
-cloudfile copyfile <source-path> <destination-path>
+cloudfile [-v|--verbose] <command> <file-path>
+cloudfile [-v|--verbose] copyfile <source-path> <destination-path>
+cloudfile [-v|--verbose] copydir <source-dir> <destination-path>
 ```
 
 ### Commands
@@ -15,6 +16,11 @@ cloudfile copyfile <source-path> <destination-path>
 - `status` - Prints `evicted` or `materialized`
 - `copyfile` - Copies a file while preserving its cloud state
   If the destination path is a directory, the source filename is appended automatically.
+- `copydir` - Copies a directory tree file-by-file while preserving each file's cloud state
+  If the destination ends in `/`, the source directory name is appended automatically.
+  If the destination does not end in `/`, the final destination path component becomes the new directory name.
+
+Use `-v` or `--verbose` to print copy, materialize, and evict operations as they happen.
 
 ## Building and Installing
 

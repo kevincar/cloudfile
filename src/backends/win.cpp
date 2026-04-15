@@ -42,6 +42,15 @@ std::string formatHresult(HRESULT hr) {
     return formatWindowsError(HRESULT_CODE(hr));
 }
 
+std::string displayName(const std::filesystem::path &path) {
+    const std::filesystem::path filename = path.filename();
+    if (!filename.empty()) {
+        return filename.string();
+    }
+
+    return path.string();
+}
+
 class Handle {
   public:
     explicit Handle(HANDLE handle) : handle_(handle) {}
@@ -128,7 +137,9 @@ int materialize(const std::filesystem::path &path) {
         return 1;
     }
 
-    std::cout << "Requested materialization of file: " << path.string() << '\n';
+    if (is_verbose()) {
+        std::cout << "Materializing " << displayName(path) << '\n';
+    }
     return 0;
 }
 
@@ -155,7 +166,9 @@ int evict(const std::filesystem::path &path) {
         return 1;
     }
 
-    std::cout << "Evicted file: " << path.string() << '\n';
+    if (is_verbose()) {
+        std::cout << "Evicting " << displayName(path) << '\n';
+    }
     return 0;
 }
 

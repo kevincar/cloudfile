@@ -7,42 +7,72 @@
 namespace {
 
 void printUsage() {
-    std::cout << "Usage: cloudfile <command> <file-path>\n"
-              << "       cloudfile copyfile <source-path> <destination-path>\n"
+    std::cout << "Usage: cloudfile [-v|--verbose] <command> <file-path>\n"
+              << "       cloudfile [-v|--verbose] copyfile <source-path> <destination-path>\n"
+              << "       cloudfile [-v|--verbose] copydir <source-dir> <destination-path>\n"
               << "Commands:\n"
               << "  materialize - Download the file from the cloud\n"
               << "  evict - Remove local copy while keeping it in the cloud\n"
               << "  status - Print whether the file is evicted or materialized\n"
-              << "  copyfile - Copy a file while preserving its cloud state\n";
+              << "  copyfile - Copy a file while preserving its cloud state\n"
+              << "  copydir - Copy a directory tree file-by-file while preserving cloud state\n";
+}
+
+bool endsWithDirectorySeparator(std::string_view path) {
+    return !path.empty() && (path.back() == '/' || path.back() == '\\');
 }
 
 }  // namespace
 
 int main(int argc, const char *argv[]) {
-    if (argc < 3 || argc > 4) {
+    int argumentIndex = 1;
+    if (argc > 1) {
+        const std::string_view option{argv[1]};
+        if (option == "-v" || option == "--verbose") {
+            set_verbose(true);
+            ++argumentIndex;
+        }
+    }
+
+    const int remainingArguments = argc - argumentIndex;
+    if (remainingArguments < 2 || remainingArguments > 3) {
         printUsage();
         return 1;
     }
 
-    const std::string_view command{argv[1]};
+    const std::string_view command{argv[argumentIndex]};
 
     if (command == "copyfile") {
-        if (argc != 4) {
+        if (remainingArguments != 3) {
             printUsage();
             return 1;
         }
 
-        const std::filesystem::path sourcePath{argv[2]};
-        const std::filesystem::path destinationPath{argv[3]};
+        const std::filesystem::path sourcePath{argv[argumentIndex + 1]};
+        const std::filesystem::path destinationPath{argv[argumentIndex + 2]};
         return copyfile(sourcePath, destinationPath);
     }
 
-    if (argc != 3) {
+    if (command == "copydir") {
+        if (remainingArguments != 3) {
+            printUsage();
+            return 1;
+        }
+
+        const std::filesystem::path sourcePath{argv[argumentIndex + 1]};
+        const std::filesystem::path destinationPath{argv[argumentIndex + 2]};
+        return copydir(
+            sourcePath,
+            destinationPath,
+            endsWithDirectorySeparator(argv[argumentIndex + 2]));
+    }
+
+    if (remainingArguments != 2) {
         printUsage();
         return 1;
     }
 
-    const std::filesystem::path filePath{argv[2]};
+    const std::filesystem::path filePath{argv[argumentIndex + 1]};
 
     if (command == "materialize") {
         return materialize(filePath);
