@@ -59,11 +59,6 @@ int status(const std::filesystem::path &path) {
 }
 
 int copyfile(const std::filesystem::path &source, const std::filesystem::path &destination) {
-    const std::optional<CloudFileStatus> originalStatus = get_status(source);
-    if (!originalStatus.has_value()) {
-        return 1;
-    }
-
     std::error_code error;
     std::filesystem::path resolvedDestination = destination;
     const bool destinationExists = std::filesystem::exists(destination, error);
@@ -84,6 +79,25 @@ int copyfile(const std::filesystem::path &source, const std::filesystem::path &d
         if (destinationIsDirectory) {
             resolvedDestination /= source.filename();
         }
+    }
+
+    const bool resolvedDestinationExists = std::filesystem::exists(resolvedDestination, error);
+    if (error) {
+        std::cerr << "Error checking destination '" << resolvedDestination.string()
+                  << "': " << error.message() << '\n';
+        return 1;
+    }
+
+    if (resolvedDestinationExists && !is_force()) {
+        if (is_verbose()) {
+            std::cout << "Skip " << displayName(source) << '\n';
+        }
+        return 0;
+    }
+
+    const std::optional<CloudFileStatus> originalStatus = get_status(source);
+    if (!originalStatus.has_value()) {
+        return 1;
     }
 
     const bool shouldRestoreEvictedState = *originalStatus == CloudFileStatus::Evicted;
