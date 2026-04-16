@@ -108,6 +108,7 @@ int copyfile(const std::filesystem::path &source, const std::filesystem::path &d
 int copydir(
     const std::filesystem::path &source,
     const std::filesystem::path &destination,
+    bool source_is_directory_contents,
     bool destination_is_directory) {
     std::error_code error;
     if (!std::filesystem::is_directory(source, error)) {
@@ -120,7 +121,7 @@ int copydir(
     }
 
     std::filesystem::path destinationRoot = destination;
-    if (destination_is_directory) {
+    if (!source_is_directory_contents && destination_is_directory) {
         destinationRoot /= source.filename();
     }
 

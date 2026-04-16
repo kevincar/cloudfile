@@ -17,6 +17,8 @@ cloudfile [-v|--verbose] [-f|--force] copydir <source-dir> <destination-path>
 - `copyfile` - Copies a file while preserving its cloud state
   If the destination path is a directory, the source filename is appended automatically.
 - `copydir` - Copies a directory tree file-by-file while preserving each file's cloud state
+  If the source ends in `/`, only the source directory contents are copied into the destination directory.
+  If the source does not end in `/`, the source directory itself is copied.
   If the destination ends in `/`, the source directory name is appended automatically.
   If the destination does not end in `/`, the final destination path component becomes the new directory name.
 

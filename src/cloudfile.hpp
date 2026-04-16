@@ -21,6 +21,7 @@ int copyfile(const std::filesystem::path &source, const std::filesystem::path &d
 int copydir(
     const std::filesystem::path &source,
     const std::filesystem::path &destination,
+    bool source_is_directory_contents,
     bool destination_is_directory);
 
 extern "C" int cloudfile_is_verbose(void);

@@ -73,6 +73,7 @@ int main(int argc, const char *argv[]) {
         return copydir(
             sourcePath,
             destinationPath,
+            endsWithDirectorySeparator(argv[argumentIndex + 1]),
             endsWithDirectorySeparator(argv[argumentIndex + 2]));
     }
 
