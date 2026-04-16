@@ -7,9 +7,9 @@
 namespace {
 
 void printUsage() {
-    std::cout << "Usage: cloudfile [-v|--verbose] <command> <file-path>\n"
-              << "       cloudfile [-v|--verbose] copyfile <source-path> <destination-path>\n"
-              << "       cloudfile [-v|--verbose] copydir <source-dir> <destination-path>\n"
+    std::cout << "Usage: cloudfile [-v|--verbose] [-f|--force] <command> <file-path>\n"
+              << "       cloudfile [-v|--verbose] [-f|--force] copyfile <source-path> <destination-path>\n"
+              << "       cloudfile [-v|--verbose] [-f|--force] copydir <source-dir> <destination-path>\n"
               << "Commands:\n"
               << "  materialize - Download the file from the cloud\n"
               << "  evict - Remove local copy while keeping it in the cloud\n"
@@ -26,12 +26,21 @@ bool endsWithDirectorySeparator(std::string_view path) {
 
 int main(int argc, const char *argv[]) {
     int argumentIndex = 1;
-    if (argc > 1) {
-        const std::string_view option{argv[1]};
+    while (argumentIndex < argc) {
+        const std::string_view option{argv[argumentIndex]};
         if (option == "-v" || option == "--verbose") {
             set_verbose(true);
             ++argumentIndex;
+            continue;
         }
+
+        if (option == "-f" || option == "--force") {
+            set_force(true);
+            ++argumentIndex;
+            continue;
+        }
+
+        break;
     }
 
     const int remainingArguments = argc - argumentIndex;

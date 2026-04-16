@@ -10,6 +10,8 @@ enum class CloudFileStatus {
 
 void set_verbose(bool verbose);
 bool is_verbose();
+void set_force(bool force);
+bool is_force();
 
 int materialize(const std::filesystem::path &path);
 int evict(const std::filesystem::path &path);

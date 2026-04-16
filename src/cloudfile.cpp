@@ -7,6 +7,7 @@
 namespace {
 
 bool g_verbose = false;
+bool g_force = false;
 
 const char *toString(CloudFileStatus statusValue) {
     if (statusValue == CloudFileStatus::Evicted) {
@@ -33,6 +34,14 @@ void set_verbose(bool verbose) {
 
 bool is_verbose() {
     return g_verbose;
+}
+
+void set_force(bool force) {
+    g_force = force;
+}
+
+bool is_force() {
+    return g_force;
 }
 
 extern "C" int cloudfile_is_verbose(void) {
@@ -71,16 +80,22 @@ int copyfile(const std::filesystem::path &source, const std::filesystem::path &d
 
     int exitCode = 0;
     error.clear();
-    if (is_verbose()) {
-        std::cout << "Copy " << displayName(source) << '\n';
-    }
-    if (!std::filesystem::copy_file(source, resolvedDestination, error)) {
-        if (error) {
-            std::cerr << "Error copying file: " << error.message() << '\n';
-        } else {
-            std::cerr << "Error copying file: destination already exists\n";
+    const auto copyOptions = is_force()
+        ? std::filesystem::copy_options::overwrite_existing
+        : std::filesystem::copy_options::none;
+    const bool copied = std::filesystem::copy_file(source, resolvedDestination, copyOptions, error);
+    if (copied) {
+        if (is_verbose()) {
+            std::cout << "Copy " << displayName(source) << '\n';
         }
+    } else if (error) {
+        std::cerr << "Error copying file: " << error.message() << '\n';
         exitCode = 1;
+    } else if (is_force()) {
+        std::cerr << "Error copying file: destination already exists\n";
+        exitCode = 1;
+    } else if (is_verbose()) {
+        std::cout << "Skip " << displayName(source) << '\n';
     }
 
     if (shouldRestoreEvictedState && evict(source) != 0) {
