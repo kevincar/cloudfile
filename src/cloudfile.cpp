@@ -66,11 +66,24 @@ int copyfile(const std::filesystem::path &source, const std::filesystem::path &d
 
     std::error_code error;
     std::filesystem::path resolvedDestination = destination;
-    if (std::filesystem::is_directory(destination, error)) {
-        resolvedDestination /= source.filename();
-    } else if (error) {
-        std::cerr << "Error checking destination: " << error.message() << '\n';
+    const bool destinationExists = std::filesystem::exists(destination, error);
+    if (error) {
+        std::cerr << "Error checking destination '" << destination.string()
+                  << "': " << error.message() << '\n';
         return 1;
+    }
+
+    if (destinationExists) {
+        const bool destinationIsDirectory = std::filesystem::is_directory(destination, error);
+        if (error) {
+            std::cerr << "Error checking destination '" << destination.string()
+                      << "': " << error.message() << '\n';
+            return 1;
+        }
+
+        if (destinationIsDirectory) {
+            resolvedDestination /= source.filename();
+        }
     }
 
     const bool shouldRestoreEvictedState = *originalStatus == CloudFileStatus::Evicted;
@@ -89,10 +102,13 @@ int copyfile(const std::filesystem::path &source, const std::filesystem::path &d
             std::cout << "Copy " << displayName(source) << '\n';
         }
     } else if (error) {
-        std::cerr << "Error copying file: " << error.message() << '\n';
+        std::cerr << "Error copying file from '" << source.string()
+                  << "' to '" << resolvedDestination.string()
+                  << "': " << error.message() << '\n';
         exitCode = 1;
     } else if (is_force()) {
-        std::cerr << "Error copying file: destination already exists\n";
+        std::cerr << "Error copying file to '" << resolvedDestination.string()
+                  << "': destination already exists\n";
         exitCode = 1;
     } else if (is_verbose()) {
         std::cout << "Skip " << displayName(source) << '\n';
@@ -113,9 +129,11 @@ int copydir(
     std::error_code error;
     if (!std::filesystem::is_directory(source, error)) {
         if (error) {
-            std::cerr << "Error checking source directory: " << error.message() << '\n';
+            std::cerr << "Error checking source directory '" << source.string()
+                      << "': " << error.message() << '\n';
         } else {
-            std::cerr << "Error copying directory: source is not a directory\n";
+            std::cerr << "Error copying directory '" << source.string()
+                      << "': source is not a directory\n";
         }
         return 1;
     }
@@ -126,31 +144,37 @@ int copydir(
     }
 
     if (!std::filesystem::create_directories(destinationRoot, error) && error) {
-        std::cerr << "Error creating destination directory: " << error.message() << '\n';
+        std::cerr << "Error creating destination directory '" << destinationRoot.string()
+                  << "': " << error.message() << '\n';
         return 1;
     }
 
     for (std::filesystem::recursive_directory_iterator it(source, error), end; it != end; it.increment(error)) {
         if (error) {
-            std::cerr << "Error walking source directory: " << error.message() << '\n';
+            std::cerr << "Error walking source directory '" << source.string()
+                      << "': " << error.message() << '\n';
             return 1;
         }
 
         const std::filesystem::path relativePath = std::filesystem::relative(it->path(), source, error);
         if (error) {
-            std::cerr << "Error computing relative path: " << error.message() << '\n';
+            std::cerr << "Error computing relative path for '" << it->path().string()
+                      << "' against '" << source.string()
+                      << "': " << error.message() << '\n';
             return 1;
         }
 
         const std::filesystem::path destinationPath = destinationRoot / relativePath;
         if (it->is_directory(error)) {
             if (error) {
-                std::cerr << "Error checking directory entry: " << error.message() << '\n';
+                std::cerr << "Error checking directory entry '" << it->path().string()
+                          << "': " << error.message() << '\n';
                 return 1;
             }
 
             if (!std::filesystem::create_directories(destinationPath, error) && error) {
-                std::cerr << "Error creating destination directory: " << error.message() << '\n';
+                std::cerr << "Error creating destination directory '" << destinationPath.string()
+                          << "': " << error.message() << '\n';
                 return 1;
             }
             continue;
@@ -158,7 +182,8 @@ int copydir(
 
         if (it->is_regular_file(error)) {
             if (error) {
-                std::cerr << "Error checking file entry: " << error.message() << '\n';
+                std::cerr << "Error checking file entry '" << it->path().string()
+                          << "': " << error.message() << '\n';
                 return 1;
             }
 
@@ -169,7 +194,8 @@ int copydir(
         }
 
         if (error) {
-            std::cerr << "Error checking directory entry: " << error.message() << '\n';
+            std::cerr << "Error checking directory entry '" << it->path().string()
+                      << "': " << error.message() << '\n';
             return 1;
         }
 
